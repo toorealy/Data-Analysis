@@ -13,7 +13,9 @@ def test_stock_ticker_type():
 test_market = Market(['msft', 'tsla', 'spy'])
 
 def test_market_uppercase():
-    assert test_market.stocks == ['MSFT', 'TSLA', 'SPY']
+    assert test_market.stocks[0].ticker == 'MSFT' #['MSFT', 'TSLA', 'SPY']
+    assert test_market.stocks[1].ticker == 'TSLA' #['MSFT', 'TSLA', 'SPY']
+    assert test_market.stocks[2].ticker == 'SPY' #['MSFT', 'TSLA', 'SPY']
 
 def test_market_types():
     assert type(test_market.stocks[0]) == type(test_stock)
