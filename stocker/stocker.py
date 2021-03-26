@@ -1,29 +1,35 @@
-# Quandl for financial analysis, pandas and numpy for data manipulation
-# fbprophet for additive models, #pytrends for Google trend data
-import yfinance as yf
+from typing import List
 import pandas as pd
-#import fbprophet
-#import pytrends
-#from pytrends.request import TrendReq
-# Class for analyzing and (attempting) to predict future prices
-# Contains a number of visualizations and analysis methods
+from datetime import datetime, timedelta
+import yfinance as yf
+
+
 class Stock:
 
     # Initialization requires a ticker symbol
-    def __init__(self, symbol, period='1y', interval='1d'):
+    def __init__(self, symbol: str, start: datetime=str((datetime.now()-timedelta(days=365))), end: datetime=str(datetime.now())):
         # Enforce capitalization
         self._ticker = symbol.upper().split(" ")[0]
 
         # Retrieval the financial data
-        self._period = period
-        self._interval = interval
         self._history = None
+        self.start_date = start.split(" ")[0]
+        self.end_date = end.split(" ")[0]
         self.stock_data = yf.Ticker(self.ticker)
         self.calculate_stats()
+
+    def __str__(self) -> str:
+        return self._ticker + " from " + str(self.start_date) + " to " + str(self.end_date)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__} ({self.ticker!r}, start={self.start_date!r}, interval={self.end_date!r} )"
 
         # Set various attributes
     def calculate_stats(self):
         self.beta = self.stock_data.info['beta']
+        c = self.history.tail(1)['Close'].item()
+        o = self.history.head(1)['Open'].item()
+        self.return_pct = ((c - o)/o)
         self.average = {'open':self.history['Open'].mean(),
                          'close':self.history['Close'].mean(),
                          'high':self.history['High'].mean(),
@@ -59,6 +65,22 @@ class Stock:
                     'close-open':self.history['Close-Open'].min(),
                     'high-low':self.history['High-Low'].min()
                     }
+    '''
+    @property
+    def start_date(self):
+        return self._start_date
+
+    @start_date.setter
+    def start_date(self, start: str):
+        try:
+            parsed = start.split("-")
+            y = parsed[0]
+            m = parsed[1]
+            d = parsed[2]
+            self.history = self.requery_data(start, self.end_date)
+        except IndexError:
+            print("Your date is not in the yyyy-mm-dd format")
+    '''
 
     @property
     def stock_data(self):
@@ -67,7 +89,7 @@ class Stock:
     @stock_data.setter
     def stock_data(self, data):
         self._stock_data = data
-        self._history = yf.download(tickers=self.ticker, period=self.period, interval=self.interval)
+        self._history = yf.download(tickers=self.ticker, start=self.start_date, end=self.end_date)
 
     @property
     def history(self):
@@ -87,7 +109,7 @@ class Stock:
     @period.setter
     def period(self, period):
         self._period = period
-        self.history = yf.download(tickers=self.ticker, period=self.period, interval=self.interval)
+        self.history = yf.download(tickers=self.ticker, start=self.start_date, end=self.end_date)
 
     @property
     def interval(self):
@@ -96,7 +118,7 @@ class Stock:
     @interval.setter
     def interval(self, interval):
         self._interval = interval
-        self.history = yf.download(tickers=self.ticker, period=self.period, interval=self.interval)
+        self.history = yf.download(tickers=self.ticker, start=self.start_date, end=self.end_date)
 
     @property
     def ticker(self):
@@ -107,3 +129,25 @@ class Stock:
         self._ticker = symbol.upper()
         self.stock_data = yf.Ticker(symbol)
         self.calculate_stats()
+
+    def requery_data(self, start, end):
+        return yf.download(tickers=self.ticker, start=start.split(" ")[0], end=end.split(" ")[0])
+
+class Market():
+    def __init__(self, symbols: List, rf: str='SPTI', start: datetime=str(datetime.now()), end: datetime=str((datetime.now()-timedelta(days=365)))):
+        # Enforce capitalization
+        tickers = [x.upper() for x in symbols]
+        self.stocks = []
+        for t in tickers:
+            self.stocks.append(Stock(t, period=period, interval=interval))
+
+        self.risk_free = Stock(rf, period=period, interval=interval)
+
+        # Retrieval the financial data
+        self.start_date = start
+        self.end_date = end
+        self._history = None
+        self.stock_data = None #yf.Ticker(self.ticker)
+        self.calculate_stats()
+    def calculate_stats(self):
+        pass
